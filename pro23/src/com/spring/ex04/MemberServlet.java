@@ -1,9 +1,11 @@
 package com.spring.ex04;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,11 +111,24 @@ public class MemberServlet extends HttpServlet {
            
            //날짜 형식은 jsp 수업 때 , 게시판에 글 등록시 사용했던 코드.
            // 시간 형식 추가작업.
-           java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyy/MM/dd");
-		   String joinDate = formatter.format(new java.util.Date());
-			
+//           java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyy/MM/dd");
+//			String joinDate = formatter.format(new java.util.Date());
+//			
 			   // 문자열 -> Date
 //	        Date joinDate = formatter.parse(date);
+           
+           // 오라클 디비에 날짜 형식이 date이고, 기본 yyyy/MM/dd 형식이고.
+           // 디비 입력시 sysdate로 입력하면, 오라클에 기본 형식으로 저장.
+           // 화면에 출력할 때는, sysdate로 되어 있음. 
+           // 화면에 출력할 때 원하는 형식으로 변경 해보기. 
+           
+           // 결론,
+           // 디비로 함수 이용해서 원하는 형식을 변환하는 방법으로 변경.
+           // 디비에서 받고 또 자바로 처리하는 부분 2번일이라서 효율적이지 못함. 
+           // 디비에서 sql  문장에서 to_char 함수를 이용해서 변환된 날짜를 받아서
+           // 바로 출력하는게 더 효율적.
+           // 만약, 원하는 날짜 타입이 추가로 더 있다면.
+           // 해당 select 로 각 형식의 예를 더 만들어서, 아이디만 변경해서 사용하기로.
 			
            
            Map<String, String> memberMap=new HashMap<String, String>();
@@ -122,7 +137,7 @@ public class MemberServlet extends HttpServlet {
            memberMap.put("name", name);
            memberMap.put("email", email);
         // 시간 형식 추가작업.
-           memberMap.put("joinDate", joinDate);
+//           memberMap.put("joinDate", joinDate);
            dao.insertMember2(memberMap);
            nextPage="/mem4.do?action=listMembers";
       }
@@ -143,41 +158,58 @@ public class MemberServlet extends HttpServlet {
 	      dao.deleteMember(id);
 	      nextPage="/mem4.do?action=listMembers";
       }else if(action.equals("searchMember")){
+    	  //뷰에서 입력 받은 데이터 가져오는 코드.
           String name=request.getParameter("name");
           String email=request.getParameter("email");
+          
+          // 임시 객체에 이름과 메일을 담고있다. 
           memberVO.setName(name);
           memberVO.setEmail(email);
+          
+          // memberVO 임시 객체에 데이터는 이름 과 메일 만 있고. 
+          // 이 객체를 이제 해당 member.xml로 호출해서, 리스트 타입으로 반환 받기. 
           List<MemberVO> membersList =dao.searchMember(memberVO);
+          
+          // 검색 조건에 해당하는 리스트를 해당 뷰에서 가져가서 사용할수 있도록 설정하기. 
           request.setAttribute("membersList",membersList);
+          
+          // 해당 뷰 페이지 정보 저장. 
           nextPage="test03/listMembers.jsp";
-       }else if(action.equals("foreachSelect")) {
+          
+       }
+      // 각자 자기 디비에 있는 이름을 입력합니다. 
+		// 이름 입력 해야하는데 아이디로 잘못 입력해서 다시 시도. 
+		// 검색 조건에 다수의 정보를 한번에 검색을 했고.
+      else if(action.equals("foreachSelect")) {
 		  List<String> nameList = new ArrayList<String>();
-		  nameList.add("서태지");
+		  nameList.add("홍길동2");
 		  nameList.add("이상용");
-		  nameList.add("홍길동");
+		  nameList.add("lsy2");
 		  
 		  List<MemberVO> membersList=dao.foreachSelect(nameList);
 		  request.setAttribute("membersList",membersList);
-		  nextPage="test03/listMembers.jsp"; 
-
-       }
-       //다수의 정보를 
-       else if(action.equals("foreachInsert")) {
+		  nextPage="test03/listMembers.jsp";
+	   }
+      // 다수의 정보를 한번에 추가하는 작업. 
+      else if(action.equals("foreachInsert")) {
           List<MemberVO> memList = new ArrayList<MemberVO>();
           memList.add(new MemberVO("m1", "1234", "m1", "m1@test.com"));
           memList.add(new MemberVO("m2", "1234", "m2", "m2@test.com"));
           memList.add(new MemberVO("m3", "1234", "m3", "m3@test.com"));
           
-          //해당
+          // 해당 디비 여러개를 한번에 추가하기. 
           int result=dao.foreachInsert(memList);
-          nextPage="/mem4.do?action=listMembers";
           
-          // 검색어를 like 연산자를 통해서 해당 내용을 검색
-	    }else if(action.equals("selectLike")) {
-	      String name="서태지";
+          nextPage="/mem4.do?action=listMembers";
+	    }
+      // 검색어를 like 연산자를 통해서 해당 내용을 검색.
+      else if(action.equals("selectLike")) {
+    	  // 각자 디비의 이름 샘플.
+	      String name="lsy2";
 	      
-	      // 다른 곳에 데이터 넘기기, 
+	      // 다른 곳에 데이터 넘기기, 지금은 문자열 형식으로 해당 이름 전달. 
 		  List<MemberVO> membersList=dao.selectLike(name);
+		  
 		  request.setAttribute("membersList",membersList);
 		  nextPage="test03/listMembers.jsp";
 	   }

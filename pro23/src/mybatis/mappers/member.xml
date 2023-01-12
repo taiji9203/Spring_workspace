@@ -20,10 +20,11 @@
       <result property="joinDate" column="joinDate" />
    </resultMap>
 
-
+<!-- 도움 : 최동규님  -->
+<!-- 디비로 날짜 변환된 내용을 바로 자바에 출력하기로 변경. -->
 	<select id="selectAllMemberList" resultMap="memResult">
       <![CDATA[
-         select * from t_member	order by joinDate desc	 	
+         select id, pwd, name, email, to_char(joinDate, '""YYYY"년 "MM"월 "DD"일 "day""') as joinDate from t_member order by joinDate desc	
       ]]>
 	</select>
 
@@ -67,7 +68,7 @@
 	<insert id="insertMember2"  parameterType="java.util.Map">
 		<![CDATA[
 			 insert into t_member(id,pwd, name, email, joinDate)
-			 values(#{id}, #{pwd}, #{name}, #{email}, #{joinDate})
+			 values(#{id}, #{pwd}, #{name}, #{email}, sysdate)
 		]]>      
    </insert>
    
@@ -90,7 +91,8 @@
 	
 	
 	<!-- 동적 SQL문 -->
-<!--   <select id="searchMember" parameterType="memberVO" resultMap="memResult">
+	
+  <!-- <select id="searchMember" parameterType="memberVO" resultMap="memResult">
       <![CDATA[
           select * from t_member 
       ]]>
@@ -103,23 +105,23 @@
          </if>
       </where>
       order by joinDate desc
-  </select> -->
+  </select>
+   -->
   
- 
    <sql id="a">
     <![CDATA[
       select * from t_member
      ]]> 
-   </sql>  
+   </sql>    
   
-   
+  
   <select id="searchMember" parameterType="memberVO" resultMap="memResult">
 	     <include refid="a" /> 
-	   <!-- <![CDATA[
+	 <!--   <![CDATA[
          select * from t_member 
       ]]> -->
-	  
-       <where>
+      
+	     <where>
 		  <choose>
 		      <when test="name != '' and name != null and  email != '' and email != null">
 			     name=#{name} and email=#{email}
@@ -135,16 +137,19 @@
        order by joinDate desc
    </select>
    
-   <select id="foreachSelect" resultMap="memResult" parameterType="java.util.Map">
-      <include refid="a" />
-      <!-- <![CDATA[
+   <!-- parameterType 부분에 map 형태로 되어 있어도 , 전에 코드에서 던질 때, 리스트로 던지면
+   밑에 부분에 foreach 태그 부분에 collection 으로 받음. 
+   주의 사항, 리스트로 던지면 : list 표기 고정. , 배열이면 :array 고정. 
+   item 의 문자열의 이름은 변경 가능.  -->
+   <select id="foreachSelect" resultMap="memResult" >
+     <include refid="a" />
+     <!--  <![CDATA[
         select * from t_member 
           
       ]]> -->
-      
       where name in
-      <foreach item="item" collection="list" open="(" separator="," close=")" >
-         #{item}
+      <foreach item="item22" collection="list" open="(" separator="," close=")" >
+         #{item22}
       </foreach>
       order by joinDate desc
    </select>
@@ -159,7 +164,7 @@
       </foreach>
    </insert>
    
-   <!-- 잘못된 예제
+   <!-- 잘못된 예제.
     <select id="selectLike" resultMap="memResult"  parameterType="String" >
       <![CDATA[
          select * from t_member
@@ -168,7 +173,9 @@
       ]]>
     </select>
      -->
-   <!--  like 검색 시 문법상 주의 사항 버티컬 바를 2번 사용 합니다. -->
+   <!--  like 검색 시 문법상 주의 사항 버티컬 바를 2번 사용 합니다. 
+   예제) '%' || #{name} || '%'
+   -->
    <select id="selectLike" resultMap="memResult"  parameterType="String" >
       <![CDATA[
          select * from t_member

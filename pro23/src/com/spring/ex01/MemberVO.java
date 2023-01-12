@@ -1,8 +1,8 @@
 package com.spring.ex01;
 
-//import java.sql.Date;
+import java.sql.Date;
 //확인 사항. 
-import java.util.Date; 
+//import java.util.Date; 
 
 //DTO 형식의 임시 객체
 public class MemberVO {
